@@ -25,31 +25,63 @@
   </style>
   <body>
     <div id='app'></div>
-
     <!-- 리액트, 리액트돔, 바벨 사용 -->
     <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <!-- 텍스트 바벨로 바꿔주기 -->
     <script type="text/babel">
-      console.log("야옹");
+      const jsonLocalStorage = {
+        setItem: (key, value) => {
+          localStorage.setItem(key, JSON.stringify(value));
+        },
+        getItem: (key) => {
+          return JSON.parse(localStorage.getItem(key));
+        },
+      };
       // 그냥 태그안에 전달값을 줄 수 있는데 이때는 칠드런으로 온다
       const Heading = (props) => {
         return <h1>{props.children}</h1>
       }
-      const Form = ({handleFormSubmit}) => {
+      const Form = ({updateMainCat}) => {
         // const counterState = React.useState(1);
         // const counter = counterState[0];
         // const setCounter = counterState[1];
-        
+        const includesHangul = (text) => /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/i.test(text);
+        const [value, setValue] = React.useState('');
+        const [errorMessage, setErrorMessage] = React.useState('');
+
+        function handleInputChange(e) {
+          const userValue = e.target.value;
+          if (includesHangul(userValue)) {
+            setErrorMessage('한글은 입력할 수 없습니다!');
+          } else {
+            setErrorMessage('');
+          }
+          setValue(userValue.toUpperCase());
+        }
+
+        function handleFormSubmit(e) {
+          e.preventDefault();
+          setErrorMessage("");
+          if (value === '') {
+            setErrorMessage("빈 값으로 만들 수 없습니다.");
+            return;
+          }
+          updateMainCat();
+        };
+
         return (
           <form onSubmit={handleFormSubmit}>
             <input 
               type="text" 
               name="name" 
-              placeholder="영어 대사를 입력해주세요" 
+              placeholder="영어 대사를 입력해주세요"
+              value={value}
+              onChange={handleInputChange}
             />
             <button type="submit">생성</button>
+            <p style={{color: "dodgerblue"}}>{errorMessage}</p>
           </form>
         );
       }
@@ -62,23 +94,16 @@
         );
       }
 
-      function Favorites() {
+      function Favorites({ favorites }) {
         return (
+          // Warning: Each child in a list should have a unique "key" prop.
           <ul className="favorites">
-            <CatItem img="https://cataas.com/cat/60b73094e04e18001194a309/says/react" />
-            <CatItem img="https://cataas.com//cat/5e9970351b7a400011744233/says/inflearn" />
-            <CatItem img="https://cataas.com/cat/595f280b557291a9750ebf65/says/JavaScript" />
+            {favorites.map(cat => <CatItem img={cat} key={cat} />)}
           </ul>
         );
       }
 
-      const MainCard = ({img}) => {
-        function handleHeartClick() {
-          console.log('하트누름~')
-        }
-        function handleHeartMouseOver() {
-          console.log('하트스쳐지나감~')
-        }
+      const MainCard = ( { img, onHeartClick } ) => {
         return (
           <div className="main-card">
             <img
@@ -86,27 +111,38 @@
               alt="고양이"
               width="400"
             />
-            <button onClick={handleHeartClick} onMouseOver={handleHeartMouseOver}>🤍</button>
+            <button onClick={onHeartClick}>🤍</button>
         </div>
         );
       };
 
       const App = () => {
-        const [counter, setCounter] = React.useState(1);
-        console.log("counter", counter);
-        console.log("setCounter", setCounter);
         
-        function handleFormSubmit(e) {
-          e.preventDefault();
-          console.log('폼 전송됨');
-          setCounter(counter + 1)
+        const CAT1 = "https://cataas.com/cat/60b73094e04e18001194a309/says/react";
+        const CAT2 = "https://cataas.com//cat/5e9970351b7a400011744233/says/inflearn";
+        const CAT3 = "https://cataas.com/cat/595f280b557291a9750ebf65/says/JavaScript";
+        
+        const [counter, setCounter] = React.useState(jsonLocalStorage.getItem('counter'));
+        const [mainCat, setMainCat] = React.useState(CAT1);
+        const [favorites, setFavorites] = React.useState(jsonLocalStorage.getItem('favorites') || []);
+
+        function updateMainCat() {
+          setMainCat(CAT2);
+          const nextCounter = counter + 1;
+          setCounter(nextCounter);
+          jsonLocalStorage.setItem('counter', nextCounter);
+        }
+        function handleHeartClick() {
+          const nextFavorites = [...favorites, mainCat];
+          setFavorites(nextFavorites);
+          jsonLocalStorage.setItem('favorites', nextFavorites)
         }
         return (
           <div>
-            <Heading>전달을 태그안에서 했습니다. 숫자는 : {counter}</Heading>
-            <Form handleFormSubmit={handleFormSubmit} />
-            <MainCard img="https://cataas.com/cat/60b73094e04e18001194a309/says/react"/>
-            <Favorites />
+            <Heading>{counter}번째 고양이😼</Heading>
+            <Form updateMainCat={updateMainCat} />
+            <MainCard img={mainCat} onHeartClick={handleHeartClick}/>
+            <Favorites favorites={favorites}/>
           </div>
         );
       };
