@@ -2,6 +2,7 @@ import React from "react";
 import './App.css';
 import Title from "./components/Title";
 import Form from "./components/Form";
+import MainCard from "./components/MainCard";
 
 
 const jsonLocalStorage = {
@@ -39,20 +40,6 @@ function Favorites({ favorites }) {
     </ul>
   );
 }
-
-const MainCard = ( { img, onHeartClick, alreadyFavorite } ) => {
-  const heartIcon = alreadyFavorite ? "💙" : "🤍" 
-  return (
-    <div className="main-card">
-      <img
-        src={img}
-        alt="고양이"
-        width="400"
-      />
-      <button onClick={onHeartClick}>{heartIcon}</button>
-  </div>
-  );
-};
 
 const App = () => {
   
